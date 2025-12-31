@@ -17,7 +17,7 @@ A smart task manager powered by AI assistance.
 
 ## Live Demo
 
-[View Live](https://shikhersaluja7.github.io/taskflow-ai/)
+[View Live](https://shikhersaluja7.github.io/tasktracker/)
 
 ## Getting Started
 
