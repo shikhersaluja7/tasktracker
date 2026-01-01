@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>📋 Task Manager</h1>
-            <p class="subtitle">Stay organized and productive</p>
+            <h1>Task Manager</h1>
+            <p class="subtitle">Organize and track your work</p>
         </header>
 
         <main class="main-content">
@@ -18,20 +18,31 @@
             <section class="input-section">
                 <form id="taskForm" class="task-form">
                     <div class="form-group">
+                        <label for="taskInput" class="input-label">Task Description:</label>
                         <input 
                             type="text" 
                             id="taskInput" 
                             class="task-input" 
                             placeholder="Add a new task..." 
+                            minlength="1"
+                            maxlength="200"
+                            aria-required="true"
+                            aria-describedby="taskHelp taskError"
                             required
                         >
-                        <select id="prioritySelect" class="priority-select">
+                        <small id="taskHelp" class="help-text">Enter a task (1-200 characters)</small>
+                        <span id="taskError" class="error-message" role="alert" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="prioritySelect" class="input-label">Priority Level:</label>
+                        <select id="prioritySelect" class="priority-select" aria-required="true" aria-describedby="priorityError">
                             <option value="low">Low</option>
                             <option value="medium" selected>Medium</option>
                             <option value="high">High</option>
                         </select>
-                        <button type="submit" class="add-btn">Add Task</button>
+                        <span id="priorityError" class="error-message" role="alert" aria-live="polite"></span>
                     </div>
+                    <button type="submit" class="add-btn">Add Task</button>
                 </form>
             </section>
 
@@ -63,6 +74,54 @@
             </section>
         </main>
     </div>
+
+    <!-- Share Task Modal -->
+    <div id="shareModal" class="modal" role="dialog" aria-labelledby="shareModalTitle" aria-hidden="true">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="shareModalTitle">Share Task</h2>
+                <button class="modal-close" id="closeModal" aria-label="Close share dialog">&times;</button>
+            </div>
+            <form id="shareForm" class="modal-body">
+                <div class="form-group">
+                    <label for="shareEmail">Recipient Email:</label>
+                    <input 
+                        type="email" 
+                        id="shareEmail" 
+                        class="share-input" 
+                        placeholder="recipient@example.com"
+                        maxlength="254"
+                        aria-required="true"
+                        aria-describedby="emailHelp emailError"
+                        required
+                    >
+                    <small id="emailHelp" class="help-text">Enter the email address of the person you want to share this task with</small>
+                    <span id="emailError" class="error-message" role="alert" aria-live="polite"></span>
+                </div>
+                <div class="form-group">
+                    <label for="shareMessage">Message (optional):</label>
+                    <textarea 
+                        id="shareMessage" 
+                        class="share-textarea" 
+                        placeholder="Add a personal message..."
+                        rows="4"
+                        maxlength="500"
+                        aria-describedby="messageHelp messageCharCount"
+                    ></textarea>
+                    <small id="messageHelp" class="help-text">Share additional context or instructions with the recipient</small>
+                    <small id="messageCharCount" class="char-count"><span id="messageLength">0</span>/500</small>
+                </div>
+                <div class="task-preview" id="taskPreview" role="region" aria-live="polite"></div>
+                <div class="modal-footer">
+                    <button type="button" class="cancel-btn" id="cancelShare">Cancel</button>
+                    <button type="submit" class="share-btn">Send via Email</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Screen reader announcements -->
+    <div id="srAnnouncements" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></div>
 
     <script src="js/app.js"></script>
 </body>
