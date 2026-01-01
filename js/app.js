@@ -6,15 +6,6 @@ class TaskManager {
         this.storageKey = 'tasks_app';
         this.sharedTaskId = null;
         
-        // Validation rules
-        this.validationRules = {
-            taskMinLength: 1,
-            taskMaxLength: 200,
-            emailMaxLength: 254,
-            messageMaxLength: 500,
-            validPriorities: ['low', 'medium', 'high']
-        };
-        
         // DOM Elements
         this.taskForm = document.getElementById('taskForm');
         this.taskInput = document.getElementById('taskInput');
@@ -30,14 +21,11 @@ class TaskManager {
         // Share Modal Elements
         this.shareModal = document.getElementById('shareModal');
         this.closeModalBtn = document.getElementById('closeModal');
-        this.shareForm = document.getElementById('shareForm');
         this.cancelShareBtn = document.getElementById('cancelShare');
+        this.confirmShareBtn = document.getElementById('confirmShare');
         this.shareEmail = document.getElementById('shareEmail');
         this.shareMessage = document.getElementById('shareMessage');
         this.taskPreview = document.getElementById('taskPreview');
-        this.emailError = document.getElementById('emailError');
-        this.messageLength = document.getElementById('messageLength');
-        this.srAnnouncements = document.getElementById('srAnnouncements');
         
         this.init();
     }
@@ -69,27 +57,11 @@ class TaskManager {
         // Share Modal Events
         this.closeModalBtn.addEventListener('click', () => this.closeShareModal());
         this.cancelShareBtn.addEventListener('click', () => this.closeShareModal());
-        this.shareForm.addEventListener('submit', (e) => this.handleShareTask(e));
-        
-        // Real-time email validation
-        this.shareEmail.addEventListener('blur', () => this.validateEmail());
-        this.shareEmail.addEventListener('input', () => {
-            this.validateEmail();
-        });
-        
-        // Character counter for message
-        this.shareMessage.addEventListener('input', () => this.updateMessageCharCount());
+        this.confirmShareBtn.addEventListener('click', () => this.handleShareTask());
         
         // Close modal when clicking outside
         this.shareModal.addEventListener('click', (e) => {
             if (e.target === this.shareModal) {
-                this.closeShareModal();
-            }
-        });
-        
-        // Keyboard: Escape key closes modal
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && this.shareModal.classList.contains('active')) {
                 this.closeShareModal();
             }
         });
@@ -211,9 +183,6 @@ class TaskManager {
             // Reset form
             this.shareEmail.value = '';
             this.shareMessage.value = '';
-            this.emailError.textContent = '';
-            this.messageLength.textContent = '0';
-            this.shareEmail.removeAttribute('aria-invalid');
             
             // Show task preview
             this.taskPreview.innerHTML = `
@@ -226,104 +195,23 @@ class TaskManager {
             
             // Show modal
             this.shareModal.classList.add('active');
-            this.shareModal.setAttribute('aria-hidden', 'false');
-            
-            // Focus on email input
             this.shareEmail.focus();
-            
-            // Announce to screen readers
-            this.announceToScreenReader(`Share task dialog opened. Task: ${task.text}`);
         }
     }
     
     closeShareModal() {
         this.shareModal.classList.remove('active');
-        this.shareModal.setAttribute('aria-hidden', 'true');
         this.sharedTaskId = null;
         this.shareEmail.value = '';
         this.shareMessage.value = '';
-        this.emailError.textContent = '';
-        this.messageLength.textContent = '0';
-        this.shareEmail.removeAttribute('aria-invalid');
-        this.announceToScreenReader('Share task dialog closed');
     }
     
-    validateEmailFormat(email) {
-        // RFC 5322 simplified email validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(email);
-    }
-    
-    validateEmail() {
+    handleShareTask() {
         const email = this.shareEmail.value.trim();
-        this.emailError.textContent = '';
-        this.shareEmail.removeAttribute('aria-invalid');
+        const message = this.shareMessage.value.trim();
         
-        // If email is empty, show required error
         if (!email) {
-            this.emailError.textContent = 'Email address is required';
-            this.shareEmail.setAttribute('aria-invalid', 'true');
-            return false;
-        }
-        
-        // Check length
-        if (email.length > this.validationRules.emailMaxLength) {
-            this.emailError.textContent = `Email must not exceed ${this.validationRules.emailMaxLength} characters`;
-            this.shareEmail.setAttribute('aria-invalid', 'true');
-            return false;
-        }
-        
-        // Check format
-        if (!this.validateEmailFormat(email)) {
-            this.emailError.textContent = 'Please enter a valid email address (e.g., user@example.com)';
-            this.shareEmail.setAttribute('aria-invalid', 'true');
-            return false;
-        }
-        
-        this.shareEmail.setAttribute('aria-invalid', 'false');
-        return true;
-    }
-    
-    validateMessage() {
-        const message = this.shareMessage.value.trim();
-        
-        if (message.length > this.validationRules.messageMaxLength) {
-            return false;
-        }
-        
-        return true;
-    }
-    
-    updateMessageCharCount() {
-        const message = this.shareMessage.value;
-        this.messageLength.textContent = message.length;
-        
-        // Show warning at 80% capacity
-        if (message.length >= this.validationRules.messageMaxLength * 0.8) {
-            this.messageLength.parentElement.classList.add('near-limit');
-        } else {
-            this.messageLength.parentElement.classList.remove('near-limit');
-        }
-    }
-    
-    handleShareTask(e) {
-        e.preventDefault();
-        
-        const email = this.shareEmail.value.trim();
-        const message = this.shareMessage.value.trim();
-        
-        // Clear previous errors
-        this.emailError.textContent = '';
-        
-        // Validate email
-        if (!this.validateEmail()) {
-            this.shareEmail.focus();
-            return;
-        }
-        
-        // Validate message length
-        if (!this.validateMessage()) {
-            this.emailError.textContent = `Message must not exceed ${this.validationRules.messageMaxLength} characters`;
+            alert('Please enter a valid email address');
             return;
         }
         
@@ -340,12 +228,9 @@ class TaskManager {
         // Open email client
         window.location.href = mailtoLink;
         
-        // Announce success
-        this.announceToScreenReader(`Email to ${email} is being prepared`);
-        
         // Show success message
         setTimeout(() => {
-            this.announceToScreenReader('Share dialog closed. Task shared successfully.');
+            alert('Opening your email client to share this task!');
             this.closeShareModal();
         }, 100);
     }
@@ -364,14 +249,6 @@ class TaskManager {
         body += 'Shared from Task Manager';
         
         return body;
-    }
-    
-    announceToScreenReader(message) {
-        this.srAnnouncements.textContent = message;
-        // Clear after announcement
-        setTimeout(() => {
-            this.srAnnouncements.textContent = '';
-        }, 3000);
     }
     
     handleClearCompleted() {
@@ -449,10 +326,10 @@ class TaskManager {
                 </div>
             </div>
             <div class="task-actions">
-                <button class="task-btn share-btn" data-id="${task.id}" aria-label="Share task: ${this.escapeHtml(task.text)}">
+                <button class="task-btn share-btn" data-id="${task.id}" title="Share">
                     📧
                 </button>
-                <button class="task-btn delete-btn" data-id="${task.id}" aria-label="Delete task: ${this.escapeHtml(task.text)}">
+                <button class="task-btn delete-btn" data-id="${task.id}" title="Delete">
                     🗑️
                 </button>
             </div>
