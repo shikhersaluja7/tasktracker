@@ -9,8 +9,8 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>📋 Task Manager</h1>
-            <p class="subtitle">Stay organized and productive</p>
+            <h1>Task Manager</h1>
+            <p class="subtitle">Organize and track your work</p>
         </header>
 
         <main class="main-content">
@@ -18,20 +18,31 @@
             <section class="input-section">
                 <form id="taskForm" class="task-form">
                     <div class="form-group">
+                        <label for="taskInput" class="input-label">Task Description:</label>
                         <input 
                             type="text" 
                             id="taskInput" 
                             class="task-input" 
                             placeholder="Add a new task..." 
+                            minlength="1"
+                            maxlength="200"
+                            aria-required="true"
+                            aria-describedby="taskHelp taskError"
                             required
                         >
-                        <select id="prioritySelect" class="priority-select">
+                        <small id="taskHelp" class="help-text">Enter a task (1-200 characters)</small>
+                        <span id="taskError" class="error-message" role="alert" aria-live="polite"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="prioritySelect" class="input-label">Priority Level:</label>
+                        <select id="prioritySelect" class="priority-select" aria-required="true" aria-describedby="priorityError">
                             <option value="low">Low</option>
                             <option value="medium" selected>Medium</option>
                             <option value="high">High</option>
                         </select>
-                        <button type="submit" class="add-btn">Add Task</button>
+                        <span id="priorityError" class="error-message" role="alert" aria-live="polite"></span>
                     </div>
+                    <button type="submit" class="add-btn">Add Task</button>
                 </form>
             </section>
 

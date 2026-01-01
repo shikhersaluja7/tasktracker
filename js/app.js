@@ -10,6 +10,8 @@ class TaskManager {
         this.taskForm = document.getElementById('taskForm');
         this.taskInput = document.getElementById('taskInput');
         this.prioritySelect = document.getElementById('prioritySelect');
+        this.taskError = document.getElementById('taskError');
+        this.priorityError = document.getElementById('priorityError');
         this.taskList = document.getElementById('taskList');
         this.emptyState = document.getElementById('emptyState');
         this.filterButtons = document.querySelectorAll('.filter-btn');
@@ -38,6 +40,12 @@ class TaskManager {
         // Form submission
         this.taskForm.addEventListener('submit', (e) => this.handleAddTask(e));
         
+        // Real-time task input validation
+        this.taskInput.addEventListener('blur', () => this.validateTaskInput());
+        this.taskInput.addEventListener('input', () => {
+            this.validateTaskInput();
+        });
+        
         // Filter buttons
         this.filterButtons.forEach(btn => {
             btn.addEventListener('click', (e) => this.handleFilterChange(e));
@@ -65,7 +73,13 @@ class TaskManager {
         const text = this.taskInput.value.trim();
         const priority = this.prioritySelect.value;
         
-        if (!text) return;
+        // Validate both fields
+        const taskValid = this.validateTaskInput();
+        const priorityValid = this.validatePriority();
+        
+        if (!taskValid || !priorityValid) {
+            return;
+        }
         
         const task = {
             id: Date.now(),
@@ -87,7 +101,50 @@ class TaskManager {
         // Reset form
         this.taskInput.value = '';
         this.prioritySelect.value = 'medium';
+        this.taskError.textContent = '';
+        this.priorityError.textContent = '';
+        this.taskInput.removeAttribute('aria-invalid');
         this.taskInput.focus();
+        this.announceToScreenReader(`Task added: ${text}`);
+    }
+    
+    validateTaskInput() {
+        const text = this.taskInput.value.trim();
+        this.taskError.textContent = '';
+        this.taskInput.removeAttribute('aria-invalid');
+        
+        if (!text) {
+            this.taskError.textContent = 'Task description is required';
+            this.taskInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+        
+        if (text.length < this.validationRules.taskMinLength) {
+            this.taskError.textContent = `Task must be at least ${this.validationRules.taskMinLength} character`;
+            this.taskInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+        
+        if (text.length > this.validationRules.taskMaxLength) {
+            this.taskError.textContent = `Task must not exceed ${this.validationRules.taskMaxLength} characters`;
+            this.taskInput.setAttribute('aria-invalid', 'true');
+            return false;
+        }
+        
+        this.taskInput.setAttribute('aria-invalid', 'false');
+        return true;
+    }
+    
+    validatePriority() {
+        const priority = this.prioritySelect.value;
+        this.priorityError.textContent = '';
+        
+        if (!this.validationRules.validPriorities.includes(priority)) {
+            this.priorityError.textContent = 'Please select a valid priority level';
+            return false;
+        }
+        
+        return true;
     }
     
     handleFilterChange(e) {
@@ -259,11 +316,12 @@ class TaskManager {
                 class="task-checkbox" 
                 ${task.completed ? 'checked' : ''}
                 data-id="${task.id}"
+                aria-label="Toggle completion status for task: ${this.escapeHtml(task.text)}"
             >
             <div class="task-content">
                 <span class="task-text">${this.escapeHtml(task.text)}</span>
                 <div class="task-meta">
-                    <span class="priority-badge ${task.priority}">${task.priority}</span>
+                    <span class="priority-badge ${task.priority}" aria-label="Priority: ${task.priority}">${task.priority}</span>
                     <span class="task-date">${task.createdAt}</span>
                 </div>
             </div>
