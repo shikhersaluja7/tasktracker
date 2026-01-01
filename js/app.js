@@ -4,6 +4,7 @@ class TaskManager {
         this.tasks = [];
         this.currentFilter = 'all';
         this.storageKey = 'tasks_app';
+        this.sharedTaskId = null;
         
         // DOM Elements
         this.taskForm = document.getElementById('taskForm');
@@ -14,6 +15,15 @@ class TaskManager {
         this.filterButtons = document.querySelectorAll('.filter-btn');
         this.taskCount = document.getElementById('taskCount');
         this.clearCompletedBtn = document.getElementById('clearCompleted');
+        
+        // Share Modal Elements
+        this.shareModal = document.getElementById('shareModal');
+        this.closeModalBtn = document.getElementById('closeModal');
+        this.cancelShareBtn = document.getElementById('cancelShare');
+        this.confirmShareBtn = document.getElementById('confirmShare');
+        this.shareEmail = document.getElementById('shareEmail');
+        this.shareMessage = document.getElementById('shareMessage');
+        this.taskPreview = document.getElementById('taskPreview');
         
         this.init();
     }
@@ -35,6 +45,18 @@ class TaskManager {
         
         // Clear completed
         this.clearCompletedBtn.addEventListener('click', () => this.handleClearCompleted());
+        
+        // Share Modal Events
+        this.closeModalBtn.addEventListener('click', () => this.closeShareModal());
+        this.cancelShareBtn.addEventListener('click', () => this.closeShareModal());
+        this.confirmShareBtn.addEventListener('click', () => this.handleShareTask());
+        
+        // Close modal when clicking outside
+        this.shareModal.addEventListener('click', (e) => {
+            if (e.target === this.shareModal) {
+                this.closeShareModal();
+            }
+        });
     }
     
     handleAddTask(e) {
@@ -94,6 +116,82 @@ class TaskManager {
         this.tasks = this.tasks.filter(t => t.id !== id);
         this.saveTasks();
         this.render();
+    }
+    
+    openShareModal(taskId) {
+        this.sharedTaskId = taskId;
+        const task = this.tasks.find(t => t.id === taskId);
+        
+        if (task) {
+            // Reset form
+            this.shareEmail.value = '';
+            this.shareMessage.value = '';
+            
+            // Show task preview
+            this.taskPreview.innerHTML = `
+                <div class="preview-label">Task:</div>
+                <div class="preview-content">
+                    <p>${this.escapeHtml(task.text)}</p>
+                    <small>${task.priority} priority</small>
+                </div>
+            `;
+            
+            // Show modal
+            this.shareModal.classList.add('active');
+            this.shareEmail.focus();
+        }
+    }
+    
+    closeShareModal() {
+        this.shareModal.classList.remove('active');
+        this.sharedTaskId = null;
+        this.shareEmail.value = '';
+        this.shareMessage.value = '';
+    }
+    
+    handleShareTask() {
+        const email = this.shareEmail.value.trim();
+        const message = this.shareMessage.value.trim();
+        
+        if (!email) {
+            alert('Please enter a valid email address');
+            return;
+        }
+        
+        const task = this.tasks.find(t => t.id === this.sharedTaskId);
+        if (!task) return;
+        
+        // Create email subject and body
+        const subject = `Check out this task: ${task.text.substring(0, 50)}`;
+        const body = this.generateEmailBody(task, message);
+        
+        // Create mailto link
+        const mailtoLink = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        
+        // Open email client
+        window.location.href = mailtoLink;
+        
+        // Show success message
+        setTimeout(() => {
+            alert('Opening your email client to share this task!');
+            this.closeShareModal();
+        }, 100);
+    }
+    
+    generateEmailBody(task, personalMessage) {
+        let body = 'I wanted to share this task with you:\n\n';
+        body += `Task: ${task.text}\n`;
+        body += `Priority: ${task.priority}\n`;
+        body += `Created: ${task.createdAt}\n`;
+        
+        if (personalMessage) {
+            body += `\nMessage from sender:\n${personalMessage}\n`;
+        }
+        
+        body += '\n---\n';
+        body += 'Shared from Task Manager';
+        
+        return body;
     }
     
     handleClearCompleted() {
@@ -170,6 +268,9 @@ class TaskManager {
                 </div>
             </div>
             <div class="task-actions">
+                <button class="task-btn share-btn" data-id="${task.id}" title="Share">
+                    📧
+                </button>
                 <button class="task-btn delete-btn" data-id="${task.id}" title="Delete">
                     🗑️
                 </button>
@@ -178,9 +279,11 @@ class TaskManager {
         
         // Attach event listeners
         const checkbox = li.querySelector('.task-checkbox');
+        const shareBtn = li.querySelector('.share-btn');
         const deleteBtn = li.querySelector('.delete-btn');
         
         checkbox.addEventListener('change', () => this.handleTaskToggle(task.id));
+        shareBtn.addEventListener('click', () => this.openShareModal(task.id));
         deleteBtn.addEventListener('click', () => this.handleTaskDelete(task.id));
         
         return li;
